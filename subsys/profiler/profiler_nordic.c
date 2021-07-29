@@ -285,6 +285,12 @@ void profiler_log_add_mem_address(struct log_event_buf *buf,
 void profiler_log_send(struct log_event_buf *buf, uint16_t event_type_id)
 {
 	__ASSERT_NO_MSG(event_type_id <= UCHAR_MAX);
+	#ifdef CONFIG_SHELL
+	__ASSERT_NO_MSG(event_type_id < sizeof(profiler_enabled_events) * 8)
+	if (!(profiler_enabled_events & BIT(event_type_id))) {
+		return;
+	}
+	#endif
 	if (sending_events) {
 		uint8_t type_id = event_type_id & UCHAR_MAX;
 
