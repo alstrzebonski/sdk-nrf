@@ -24,16 +24,6 @@
 #define CONFIG_MAX_NUMBER_OF_CUSTOM_EVENTS 0
 #endif
 
-/** @brief Set of flags for enabling/disabling profiling for given event types.
- */
-extern uint32_t profiler_enabled_events;
-
-
-/** @brief Number of event types registered in the Profiler.
- */
-extern uint8_t profiler_num_events;
-
-
 /** @brief Data types for profiling.
  */
 enum profiler_arg {
@@ -86,9 +76,9 @@ static inline void profiler_term(void) {}
  * @return Event description.
  */
 #ifdef CONFIG_PROFILER
-const char *profiler_get_event_descr(size_t profiler_event_id);
+const char *profiler_get_event_descr(uint16_t event_type_id);
 #else
-static inline const char *profiler_get_event_descr(size_t profiler_event_id)
+static inline const char *profiler_get_event_descr(uint16_t event_type_id)
 {
 	return NULL;
 }
@@ -96,18 +86,18 @@ static inline const char *profiler_get_event_descr(size_t profiler_event_id)
 
 /** @brief Check if profiling is enabled for a given event type.
  *
- * @param profiler_event_id Event ID.
+ * @param event_type_id Event ID.
  *
  * @return Logical value indicating if the event type is currently profiled.
  */
-static inline bool is_profiling_enabled(size_t profiler_event_id)
+#ifdef CONFIG_PROFILER
+bool is_profiling_enabled(uint16_t event_type_id);
+#else
+static inline bool is_profiling_enabled(uint16_t event_type_id)
 {
-	if (IS_ENABLED(CONFIG_PROFILER)) {
-		__ASSERT_NO_MSG(profiler_event_id < CONFIG_MAX_NUMBER_OF_CUSTOM_EVENTS);
-		return (profiler_enabled_events & BIT(profiler_event_id)) != 0;
-	}
 	return false;
 }
+#endif
 
 /** @brief Register an event type.
  *
@@ -137,9 +127,12 @@ static inline uint16_t profiler_register_event_type(const char *name,
  * @param buf Pointer to the data buffer.
  */
 #ifdef CONFIG_PROFILER
-void profiler_log_start(struct log_event_buf *buf);
+bool profiler_log_start(struct log_event_buf *buf, uint16_t event_type_id);
 #else
-static inline void profiler_log_start(struct log_event_buf *buf) {}
+static inline bool profiler_log_start(struct log_event_buf *buf, uint16_t event_type_id)
+{
+	return false;
+}
 #endif
 
 
@@ -210,6 +203,24 @@ void profiler_log_send(struct log_event_buf *buf, uint16_t event_type_id);
 #else
 static inline void profiler_log_send(struct log_event_buf *buf,
 				     uint16_t event_type_id) {}
+#endif
+
+/**
+ * 
+*/
+#ifdef CONFIG_PROFILER
+void profiler_log_enable(uint16_t event_type_id);
+#else
+static inline void profiler_log_enable(uint16_t event_type_id) {}
+#endif
+
+/**
+ * 
+*/
+#ifdef CONFIG_PROFILER
+void profiler_log_disable(uint16_t event_type_id);
+#else
+static inline void profiler_log_disable(uint16_t event_type_id) {}
 #endif
 
 

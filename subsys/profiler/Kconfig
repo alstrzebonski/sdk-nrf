@@ -73,6 +73,10 @@ config PROFILER_NORDIC_THREAD_PRIORITY
 	int "Priority of thread handling host input"
 	default 10
 
+config PROFILER_DYNAMIC_EVENT_ENABLING
+	bool "Enable dynamic events enabling and disabling"
+	default y
+
 endmenu # Advanced
 
 endif # PROFILER

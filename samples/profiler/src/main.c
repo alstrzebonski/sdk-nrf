@@ -18,7 +18,7 @@ static void profile_no_data_event(void)
 {
 	struct log_event_buf buf;
 
-	profiler_log_start(&buf);
+	profiler_log_start(&buf, no_data_event_id);
 	profiler_log_send(&buf, no_data_event_id);
 }
 
@@ -26,7 +26,7 @@ static void profile_data_event(uint32_t val1, int32_t val2, const char *string)
 {
 	struct log_event_buf buf;
 
-	profiler_log_start(&buf);
+	profiler_log_start(&buf, data_event_id);
 	/* Use this function for every data type except string */
 	profiler_log_encode_u32(&buf, val1);
 	profiler_log_encode_u32(&buf, val2);
@@ -77,7 +77,7 @@ void main(void)
 		profile_no_data_event();
 		k_sleep(K_MSEC(10));
 		profile_data_event(val1, val2, string);
-		printk("Events sent\n");
+		//printk("Events sent\n");
 		k_sleep(K_MSEC(500));
 	}
 

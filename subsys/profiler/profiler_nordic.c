@@ -12,15 +12,9 @@
 #include <zephyr.h>
 #include <SEGGER_RTT.h>
 #include <profiler.h>
+#include <profiler_backend.h>
 #include <string.h>
 #include <nrfx.h>
-
-
-/* By default, when there is no shell, all events are profiled. */
-#ifndef CONFIG_SHELL
-uint32_t profiler_enabled_events = 0xffffffff;
-#endif
-
 
 static K_SEM_DEFINE(profiler_sem, 0, 1);
 static bool protocol_running;
@@ -45,7 +39,6 @@ static char *arg_types_encodings[] = {
 					"t"    /* time */
 				     };
 
-uint8_t profiler_num_events;
 
 static uint8_t buffer_data[CONFIG_PROFILER_NORDIC_DATA_BUFFER_SIZE];
 static uint8_t buffer_info[CONFIG_PROFILER_NORDIC_INFO_BUFFER_SIZE];
@@ -93,7 +86,7 @@ static void send_system_description(void)
 	/* Memory barrier to make sure that data is visible
 	 * before being accessed
 	 */
-	uint8_t ne = profiler_num_events;
+	uint8_t ne = get_profiler_num_events();
 
 	__DMB();
 	char end_line = '\n';
@@ -141,7 +134,7 @@ static void profiler_nordic_thread_fn(void)
 	k_sem_give(&profiler_sem);
 }
 
-int profiler_init(void)
+int profiler_init_backend(void)
 {
 	protocol_running = true;
 	if (IS_ENABLED(CONFIG_PROFILER_NORDIC_START_LOGGING_ON_SYSTEM_START)) {
@@ -182,7 +175,7 @@ int profiler_init(void)
 	return 0;
 }
 
-void profiler_term(void)
+void profiler_term_backend(void)
 {
 	sending_events = false;
 	protocol_running = false;
@@ -190,12 +183,12 @@ void profiler_term(void)
 	k_sem_take(&profiler_sem, K_FOREVER);
 }
 
-const char *profiler_get_event_descr(size_t profiler_event_id)
+const char *profiler_get_event_descr_backend(uint16_t event_type_id)
 {
-	return descr[profiler_event_id];
+	return descr[event_type_id];
 }
 
-uint16_t profiler_register_event_type(const char *name, const char * const *args,
+uint16_t profiler_register_event_type_backend(const char *name, const char * const *args,
 				   const enum profiler_arg *arg_types,
 				   uint8_t arg_cnt)
 {
@@ -203,7 +196,7 @@ uint16_t profiler_register_event_type(const char *name, const char * const *args
 	 * from multiple threads
 	 */
 	k_sched_lock();
-	uint8_t ne = profiler_num_events;
+	uint8_t ne = get_profiler_num_events();
 	size_t temp = snprintf(descr[ne],
 			CONFIG_MAX_LENGTH_OF_CUSTOM_EVENTS_DESCRIPTIONS,
 			"%s,%d", name, ne);
@@ -235,13 +228,12 @@ uint16_t profiler_register_event_type(const char *name, const char * const *args
 	 * before being accessed
 	 */
 	__DMB();
-	profiler_num_events++;
 	k_sched_unlock();
 
 	return ne;
 }
 
-void profiler_log_start(struct log_event_buf *buf)
+void profiler_log_start_backend(struct log_event_buf *buf)
 {
 	/* Adding one to pointer to make space for event type ID */
 	__ASSERT_NO_MSG(sizeof(uint8_t) <= CONFIG_PROFILER_CUSTOM_EVENT_BUF_LEN);
@@ -249,7 +241,7 @@ void profiler_log_start(struct log_event_buf *buf)
 	profiler_log_encode_u32(buf, k_cycle_get_32());
 }
 
-void profiler_log_encode_u32(struct log_event_buf *buf, uint32_t data)
+void profiler_log_encode_u32_backend(struct log_event_buf *buf, uint32_t data)
 {
 	__ASSERT_NO_MSG(buf->payload - buf->payload_start + sizeof(data)
 			 <= CONFIG_PROFILER_CUSTOM_EVENT_BUF_LEN);
@@ -257,7 +249,7 @@ void profiler_log_encode_u32(struct log_event_buf *buf, uint32_t data)
 	buf->payload += sizeof(data);
 }
 
-void profiler_log_encode_string(struct log_event_buf *buf, const char *string)
+void profiler_log_encode_string_backend(struct log_event_buf *buf, const char *string)
 {
 	size_t string_len = strlen(string);
 
@@ -276,21 +268,15 @@ void profiler_log_encode_string(struct log_event_buf *buf, const char *string)
 	buf->payload += string_len;
 }
 
-void profiler_log_add_mem_address(struct log_event_buf *buf,
+void profiler_log_add_mem_address_backend(struct log_event_buf *buf,
 				  const void *mem_address)
 {
 	profiler_log_encode_u32(buf, (uint32_t)mem_address);
 }
 
-void profiler_log_send(struct log_event_buf *buf, uint16_t event_type_id)
+void profiler_log_send_backend(struct log_event_buf *buf, uint16_t event_type_id)
 {
 	__ASSERT_NO_MSG(event_type_id <= UCHAR_MAX);
-	#ifdef CONFIG_SHELL
-	__ASSERT_NO_MSG(event_type_id < sizeof(profiler_enabled_events) * 8)
-	if (!(profiler_enabled_events & BIT(event_type_id))) {
-		return;
-	}
-	#endif
 	if (sending_events) {
 		uint8_t type_id = event_type_id & UCHAR_MAX;
 

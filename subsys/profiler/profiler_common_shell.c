@@ -9,12 +9,13 @@
 #include <shell/shell.h>
 #include <shell/shell_rtt.h>
 #include <profiler.h>
-
-uint32_t profiler_enabled_events;
+#include <profiler_backend.h>
 
 static int display_registered_events(const struct shell *shell, size_t argc,
 				char **argv)
 {
+	uint32_t profiler_enabled_events = get_profiler_enabled_events();
+	uint8_t profiler_num_events = get_profiler_num_events();
 	/* Check if flags for enabling/disabling custom event fit on uint32_t */
 	BUILD_ASSERT(CONFIG_MAX_NUMBER_OF_CUSTOM_EVENTS <=
 			 sizeof(profiler_enabled_events) * 8,
@@ -40,12 +41,16 @@ static int display_registered_events(const struct shell *shell, size_t argc,
 static void set_event_profiling(const struct shell *shell, size_t argc,
 				char **argv, bool enable)
 {
-	uint32_t evt_mask = 0;
-
+	uint8_t profiler_num_events = get_profiler_num_events();
 	/* If no IDs specified, all registered events are affected */
 	if (argc == 1) {
 		for (int i = 0; i < profiler_num_events; i++) {
-			evt_mask |= BIT(i);
+			if (enable) {
+				profiler_log_enable(i);
+			}
+			else {
+				profiler_log_disable(i);
+			}
 		}
 
 		shell_fprintf(shell,
@@ -71,7 +76,13 @@ static void set_event_profiling(const struct shell *shell, size_t argc,
 		}
 
 		for (size_t i = 0; i < index_cnt; i++) {
-			evt_mask |= BIT(event_indexes[i]);
+			//evt_mask |= BIT(event_indexes[i]);
+			if (enable) {
+				profiler_log_enable(event_indexes[i]);
+			}
+			else {
+				profiler_log_disable(event_indexes[i]);
+			}
 			const char *event_name = profiler_get_event_descr(
 							event_indexes[i]);
 			/* Looking for event name delimiter (',') */
@@ -84,11 +95,6 @@ static void set_event_profiling(const struct shell *shell, size_t argc,
 				      event_name,
 				      enable ? "en":"dis");
 		}
-	}
-	if (enable) {
-		profiler_enabled_events |= evt_mask;
-	} else {
-		profiler_enabled_events &= ~evt_mask;
 	}
 }
 
@@ -111,10 +117,10 @@ SHELL_STATIC_SUBCMD_SET_CREATE(sub_profiler,
 			display_registered_events, 0, 0),
 	SHELL_CMD_ARG(enable, NULL, "Enable profiling of event with given ID",
 			enable_event_profiling, 1,
-			sizeof(profiler_enabled_events) * 8),
+			sizeof(get_profiler_enabled_events()) * 8),
 	SHELL_CMD_ARG(disable, NULL, "Disable profiling of event with given ID",
 			disable_event_profiling, 1,
-			sizeof(profiler_enabled_events) * 8),
+			sizeof(get_profiler_enabled_events()) * 8),
 	SHELL_SUBCMD_SET_END
 );
 SHELL_CMD_REGISTER(profiler, &sub_profiler, "Profiler commands", NULL);
