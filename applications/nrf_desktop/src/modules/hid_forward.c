@@ -425,6 +425,7 @@ static uint8_t hogp_read(struct bt_hogp *hids_c,
 		} else if (bt_hogp_rep_boot_mouse_in(hids_c)) {
 			report_id = REPORT_ID_BOOT_MOUSE;
 		}
+		tescik
 	}
 
 	__ASSERT_NO_MSG((report_id != REPORT_ID_RESERVED) &&
