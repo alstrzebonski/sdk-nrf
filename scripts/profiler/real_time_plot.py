@@ -6,29 +6,55 @@
 from multiprocessing import Process, Event
 import argparse
 import logging
+import os
 from rtt2socket import Rtt2Socket
 from model_creator import ModelCreator
 from plot_nordic import PlotNordic
 
-RTT2SOCKET_OUT_ADDR_DICT = {
-    'descriptions': '\0' + 'rtt2socket_desc',
-    'events': '\0' + 'rtt2socket_ev'
-}
+if os.name == 'posix':
+    RTT2SOCKET_OUT_ADDR_DICT = {
+        'descriptions': '\0' + 'rtt2socket_desc',
+        'events': '\0' + 'rtt2socket_ev'
+    }
 
-MODEL_CREATOR_IN_ADDR_DICT = {
-    'descriptions': '\0' + 'model_creator_desc',
-    'events': '\0' + 'model_creator_ev'
-}
+    MODEL_CREATOR_IN_ADDR_DICT = {
+        'descriptions': '\0' + 'model_creator_desc',
+        'events': '\0' + 'model_creator_ev'
+    }
 
-MODEL_CREATOR_OUT_ADDR_DICT = {
-    'descriptions': '\0' + 'model_creator_proc_desc',
-    'events': '\0' + 'model_creator_proc_ev'
-}
+    MODEL_CREATOR_OUT_ADDR_DICT = {
+        'descriptions': '\0' + 'model_creator_proc_desc',
+        'events': '\0' + 'model_creator_proc_ev'
+    }
 
-PLOT_IN_ADDR_DICT = {
-    'descriptions': '\0' + 'plot_desc',
-    'events': '\0' + 'plot_ev'
-}
+    PLOT_IN_ADDR_DICT = {
+        'descriptions': '\0' + 'plot_desc',
+        'events': '\0' + 'plot_ev'
+    }
+else:
+    IP_ADDRESS = 'localhost'
+    PORT_START = 8000
+
+    RTT2SOCKET_OUT_ADDR_DICT = {
+        'descriptions': (IP_ADDRESS, PORT_START),
+        'events': (IP_ADDRESS, PORT_START + 1)
+    }
+
+    MODEL_CREATOR_IN_ADDR_DICT = {
+        'descriptions': (IP_ADDRESS, PORT_START + 2),
+        'events': (IP_ADDRESS, PORT_START + 3)
+    }
+
+    MODEL_CREATOR_OUT_ADDR_DICT = {
+        'descriptions': (IP_ADDRESS, PORT_START + 4),
+        'events': (IP_ADDRESS, PORT_START + 5)
+    }
+
+    PLOT_IN_ADDR_DICT = {
+        'descriptions': (IP_ADDRESS, PORT_START + 6),
+        'events': (IP_ADDRESS, PORT_START + 7)
+    }
+
 
 def rtt2socket(event_plot, event_model_creator, log_lvl_number):
     try:

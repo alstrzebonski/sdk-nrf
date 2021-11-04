@@ -5,6 +5,7 @@
 
 import socket
 import errno
+import os
 
 class StreamError(Exception):
     pass
@@ -13,10 +14,14 @@ class Stream():
     RECV_BUF_SIZE = 2**13
 
     def __init__(self, own_socket_dict, timeouts, remote_socket_dict=None):
-        self.own_sock_desc = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        if os.name == 'posix':
+            self.own_sock_desc = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+            self.own_sock_ev = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        else:
+            self.own_sock_desc = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.own_sock_ev = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.own_sock_desc.bind(own_socket_dict['descriptions'])
         self.own_sock_desc.settimeout(timeouts['descriptions'])
-        self.own_sock_ev = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         self.own_sock_ev.bind(own_socket_dict['events'])
         self.own_sock_ev.settimeout(timeouts['events'])
 
