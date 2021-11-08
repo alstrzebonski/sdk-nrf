@@ -223,4 +223,5 @@ class Rtt2Socket:
     def close(self):
         self.logger.info("Real time transmission closed")
         self.disconnect()
+        del self.out_stream
         sys.exit()

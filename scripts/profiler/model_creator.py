@@ -223,6 +223,7 @@ class ModelCreator:
         event_string = tracked_event.serialize()
         try:
             self.out_stream.send_ev(event_string.encode())
+            print("event sent")
         except StreamError as err:
             if err.args[1] != 'closed':
                 self.logger.error("Error. Unable to send data: {}".format(err))
@@ -288,4 +289,7 @@ class ModelCreator:
         self.logger.info("Real time transmission closed")
         self.shutdown()
         self.logger.info("Events data saved to files")
+        del self.in_stream
+        if self.sending:
+            del self.out_stream
         sys.exit()

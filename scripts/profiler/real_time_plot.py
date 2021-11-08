@@ -34,6 +34,7 @@ if os.name == 'posix':
 else:
     IP_ADDRESS = 'localhost'
     PORT_START = 8000
+    print("windows")
 
     RTT2SOCKET_OUT_ADDR_DICT = {
         'descriptions': (IP_ADDRESS, PORT_START),

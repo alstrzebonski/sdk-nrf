@@ -450,6 +450,8 @@ class PlotNordic():
         self.draw_state.ax.add_collection(PatchCollection(rects))
         plt.gcf().canvas.flush_events()
         if self.close_event_flag:
+            print("exiting")
+            del self.in_stream
             sys.exit()
 
     def plot_events_real_time(self, selected_events_types=None):
