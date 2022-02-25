@@ -1,0 +1,23 @@
+#
+# Copyright (c) 2022 Nordic Semiconductor
+#
+# SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+
+menuconfig BT_FAST_PAIR
+	bool "Fast Pair service"
+	select BT_NRF_SERVICES
+	default n
+	help
+	  Enable Fast Pair service.
+
+if BT_FAST_PAIR
+
+config BT_FAST_PAIR_CRYPTO
+	bool
+	select TINYCRYPT
+	select TINYCRYPT_SHA256
+	select TINYCRYPT_AES
+	select TINYCRYPT_ECC_DH
+	default y
+
+endif # BT_FAST_PAIR
