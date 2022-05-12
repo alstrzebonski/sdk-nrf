@@ -36,17 +36,31 @@ size_t bt_fast_pair_adv_data_size(bool fp_discoverable);
  *
  * The buffer size must be at least @ref bt_fast_pair_adv_data_size.
  *
- * @param[out] adv_data		Pointer to the Bluetooth advertising data structure to be filled.
- * @param[out] buf		Pointer to the buffer used to store Fast Pair advertising data.
- * @param[in]  buf_size		Size of the buffer used to store Fast Pair advertising data.
- * @param[in]  fp_discoverable	Boolean indicating if device is Fast Pair discoverable.
+ * @param[out] adv_data		     Pointer to the Bluetooth advertising data structure to be
+ *                                   filled.
+ * @param[out] buf		     Pointer to the buffer used to store Fast Pair advertising data.
+ * @param[in]  buf_size		     Size of the buffer used to store Fast Pair advertising data.
+ * @param[in]  fp_discoverable	     Boolean indicating if device is Fast Pair discoverable.
  *
  * @return 0 if the operation was successful. Otherwise, a (negative) error code is returned.
  */
 int bt_fast_pair_adv_data_fill(struct bt_data *adv_data, uint8_t *buf, size_t buf_size,
 			       bool fp_discoverable);
 
-/** Enable or disable Fast Pair pairing mode
+/** Show or hide UI indication on Fast Pair Seeker device.
+ *
+ * Device must be Fast Pair not discoverable and the Account Key List must be not empty for
+ * show/hide UI indication option to be used.
+ *
+ * It's user responsibility to make sure that proper UI indication option is enabled before
+ * advertising is started. By default, show UI indication option is enabled.
+ *
+ * @param[in] fp_show_ui_indication Boolean indicating if UI indication are to be shown on Fast Pair
+ *                                  Seeker device.
+ */
+void bt_fast_pair_show_ui_indication(bool fp_show_ui_indication);
+
+/** Enable or disable Fast Pair pairing mode.
  *
  * Pairing mode must be enabled if discoverable Fast Pair advertising is used.
  * Pairing mode must be disabled if not discoverable Fast Pair advertising is used.

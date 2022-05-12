@@ -30,8 +30,7 @@ static const uint16_t fast_pair_uuid = BT_FAST_PAIR_SERVICE_UUID;
 static const uint8_t flags;
 static const uint8_t empty_account_key_list;
 
-static const enum fp_field_type ak_filter_type = FP_FIELD_TYPE_SHOW_UI_INDICATION;
-
+static enum fp_field_type ak_filter_type = FP_FIELD_TYPE_SHOW_UI_INDICATION;
 
 static size_t bt_fast_pair_adv_data_size_non_discoverable(size_t account_key_cnt)
 {
@@ -163,4 +162,10 @@ int bt_fast_pair_adv_data_fill(struct bt_data *bt_adv_data, uint8_t *buf, size_t
 	}
 
 	return err;
+}
+
+void bt_fast_pair_show_ui_indication(bool fp_show_ui_indication)
+{
+	ak_filter_type = fp_show_ui_indication ?
+			 FP_FIELD_TYPE_SHOW_UI_INDICATION : FP_FIELD_TYPE_HIDE_UI_INDICATION;
 }
