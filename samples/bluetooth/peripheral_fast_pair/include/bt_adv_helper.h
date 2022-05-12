@@ -28,11 +28,16 @@ extern "C" {
  *
  * The function handles also periodic RPA rotation and Fast Pair advertising data update.
  *
- * @param[in] fp_discoverable Indicate if the device should be Fast Pair discoverable.
+ * Device must be Fast Pair not discoverable and the Account Key List must be not empty for
+ * show/hide UI indication option to be used.
+ *
+ * @param[in] fp_discoverable	    Indicate if the device should be Fast Pair discoverable.
+ * @param[in] fp_show_ui_indication Boolean indicating if UI indication are to be shown on Fast Pair
+ *                                  Seeker device.
  *
  * @return 0 if the operation was successful. Otherwise, a (negative) error code is returned.
  */
-int bt_adv_helper_adv_start(bool fp_discoverable);
+int bt_adv_helper_adv_start(bool fp_discoverable, bool fp_show_ui_indication);
 
 /** Stop Fast Pair sample advertising
  *

@@ -14,17 +14,20 @@
 #include "bt_adv_helper.h"
 #include "hids_helper.h"
 
-#define RUN_STATUS_LED			DK_LED1
-#define CON_STATUS_LED			DK_LED2
-#define FP_DISCOVERABLE_STATUS_LED	DK_LED3
+#define RUN_STATUS_LED				DK_LED1
+#define CON_STATUS_LED				DK_LED2
+#define FP_DISCOVERABLE_STATUS_LED		DK_LED3
+#define FP_SHOW_UI_INDICATION_STATUS_LED	DK_LED4
 
-#define FP_DISCOVERABLE_BUTTON_MASK	DK_BTN1_MSK
-#define VOLUME_UP_BUTTON_MASK		DK_BTN2_MSK
-#define VOLUME_DOWN_BUTTON_MASK		DK_BTN4_MSK
+#define FP_DISCOVERABLE_BUTTON_MASK		DK_BTN1_MSK
+#define FP_SHOW_UI_INDICATION_BUTTON_MASK	DK_BTN3_MSK
+#define VOLUME_UP_BUTTON_MASK			DK_BTN2_MSK
+#define VOLUME_DOWN_BUTTON_MASK			DK_BTN4_MSK
 
-#define RUN_LED_BLINK_INTERVAL_MS	1000
+#define RUN_LED_BLINK_INTERVAL_MS		1000
 
 static bool fp_discoverable = true;
+static bool fp_show_ui_indication = true;
 static struct bt_conn *peer;
 
 static struct k_work bt_adv_restart;
@@ -32,11 +35,15 @@ static struct k_work bt_adv_restart;
 
 static void advertising_start(void)
 {
-	int err = bt_adv_helper_adv_start(fp_discoverable);
+	int err = bt_adv_helper_adv_start(fp_discoverable, fp_show_ui_indication);
 
 	if (!err) {
 		printk("%siscoverable advertising started\n",
 		       fp_discoverable ? "D" : "Non-d");
+		if (!fp_discoverable) {
+			printk("Show UI indication option %s\n",
+			       fp_show_ui_indication ? "enabled" : "disabled");
+		}
 	} else {
 		printk("Advertising failed to start (err %d)\n", err);
 	}
@@ -173,9 +180,22 @@ static void fp_discoverable_btn_handle(uint32_t button_state, uint32_t has_chang
 	}
 }
 
+static void fp_show_ui_indication_btn_handle(uint32_t button_state, uint32_t has_changed)
+{
+	if (has_changed & button_state & FP_SHOW_UI_INDICATION_BUTTON_MASK) {
+		fp_show_ui_indication = !fp_show_ui_indication;
+		dk_set_led(FP_SHOW_UI_INDICATION_STATUS_LED, fp_show_ui_indication);
+
+		if (!peer && !fp_discoverable) {
+			advertising_start();
+		}
+	}
+}
+
 static void button_changed(uint32_t button_state, uint32_t has_changed)
 {
 	fp_discoverable_btn_handle(button_state, has_changed);
+	fp_show_ui_indication_btn_handle(button_state, has_changed);
 	volume_control_btn_handle(button_state, has_changed);
 }
 
@@ -217,6 +237,7 @@ void main(void)
 	k_work_init(&bt_adv_restart, bt_adv_restart_fn);
 
 	dk_set_led(FP_DISCOVERABLE_STATUS_LED, fp_discoverable);
+	dk_set_led(FP_SHOW_UI_INDICATION_STATUS_LED, fp_show_ui_indication);
 	advertising_start();
 
 	err = dk_buttons_init(button_changed);

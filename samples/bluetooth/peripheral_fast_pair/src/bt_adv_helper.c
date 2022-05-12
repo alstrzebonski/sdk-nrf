@@ -197,11 +197,14 @@ static void rpa_rotate_fn(struct k_work *w)
 	(void)adv_start_internal(false);
 }
 
-int bt_adv_helper_adv_start(bool fp_discoverable)
+int bt_adv_helper_adv_start(bool fp_discoverable, bool fp_show_ui_indication)
 {
 	struct k_work_sync sync;
 
 	k_work_cancel_delayable_sync(&rpa_rotate, &sync);
+
+	/* Fast Pair show/hide UI indication mode must be manually set by the sample. */
+	bt_fast_pair_show_ui_indication(fp_show_ui_indication);
 
 	return adv_start_internal(fp_discoverable);
 }
