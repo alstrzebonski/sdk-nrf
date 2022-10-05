@@ -15,6 +15,7 @@ if BT_FAST_PAIR
 
 config BT_FAST_PAIR_EXT_PN
 	bool
+	default y
 	select BT_FAST_PAIR_ADDITIONAL_DATA
 	select BT_FAST_PAIR_STORAGE_EXT_PN
 	help

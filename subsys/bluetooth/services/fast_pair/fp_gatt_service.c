@@ -288,10 +288,22 @@ static int parse_key_based_pairing_write(const struct bt_conn *conn,
 		return err;
 	}
 
+	LOG_INF("Expected address: %X:%X:%X:%X:%X:%X", conn_info.le.local->a.val[0],
+		conn_info.le.local->a.val[1], conn_info.le.local->a.val[2],
+		conn_info.le.local->a.val[3], conn_info.le.local->a.val[4],
+		conn_info.le.local->a.val[5]);
+
+	LOG_INF("Received address: %X:%X:%X:%X:%X:%X", parsed_req->provider_address[0],
+		parsed_req->provider_address[1], parsed_req->provider_address[2],
+		parsed_req->provider_address[3], parsed_req->provider_address[4],
+		parsed_req->provider_address[5]);
+
 	if (memcmp(parsed_req->provider_address, &conn_info.le.local->a.val,
 	    sizeof(parsed_req->provider_address))) {
+		LOG_ERR("Addresses do not match");
 		return -EINVAL;
 	}
+	LOG_INF("Addresses match");
 
 	switch (parsed_req->msg_type) {
 	case FP_MSG_KEY_BASED_PAIRING_REQ:
