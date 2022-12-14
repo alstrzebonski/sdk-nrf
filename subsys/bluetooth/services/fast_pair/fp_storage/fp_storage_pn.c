@@ -119,3 +119,20 @@ int fp_storage_pn_save(const char *pn_to_save)
 
 	return 0;
 }
+
+int fp_storage_pn_delete(void)
+{
+	int err;
+
+	err = settings_delete(SETTINGS_PN_FULL_NAME);
+	if (err) {
+		return err;
+	}
+
+	memset(personalized_name, 0, sizeof(personalized_name));
+
+	settings_set_err = 0;
+	atomic_set(&settings_loaded, true);
+
+	return 0;
+}

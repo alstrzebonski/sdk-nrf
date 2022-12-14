@@ -13,6 +13,12 @@ config BT_FAST_PAIR_STORAGE
 
 if BT_FAST_PAIR_STORAGE
 
+config BT_FAST_PAIR_STORAGE_RESET
+	bool
+	default y
+	help
+	  Add Fast Pair storage source files for factory reset functionality.
+
 config BT_FAST_PAIR_STORAGE_ACCOUNT_KEY_MAX
 	int "Maximum number of stored Account Keys"
 	range 5 10

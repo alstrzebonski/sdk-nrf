@@ -26,7 +26,7 @@
 extern "C" {
 #endif
 
-/** Settings subtree name for Fast Pair storage. */
+/** Settings subtree name for Fast Pair Account Key storage. */
 #define SETTINGS_AK_SUBTREE_NAME "fp_ak"
 
 /** Settings key name prefix for Account Key. */

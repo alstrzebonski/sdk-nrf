@@ -304,6 +304,37 @@ int fp_storage_account_key_save(const struct fp_account_key *account_key)
 	return 0;
 }
 
+int fp_storage_delete(void)
+{
+	for (size_t index = 0; index < CONFIG_BT_FAST_PAIR_STORAGE_ACCOUNT_KEY_MAX; index++) {
+		int err;
+		int n;
+		char name[SETTINGS_AK_NAME_MAX_SIZE];
+
+		n = snprintf(name, SETTINGS_AK_NAME_MAX_SIZE, "%s%u", SETTINGS_AK_FULL_PREFIX,
+			     index);
+		__ASSERT_NO_MSG(n < SETTINGS_AK_NAME_MAX_SIZE);
+		if (n < 0) {
+			return n;
+		}
+
+		err = settings_delete(name);
+		if (err) {
+			return err;
+		}
+	}
+
+	memset(account_key_list, 0, sizeof(account_key_list));
+	memset(account_key_loaded_ids, 0, sizeof(account_key_loaded_ids));
+	account_key_next_id = ACCOUNT_KEY_MIN_ID;
+	account_key_count = 0;
+
+	settings_set_err = 0;
+	atomic_set(&settings_loaded, true);
+
+	return 0;
+}
+
 void fp_storage_ram_clear(void)
 {
 	memset(account_key_list, 0, sizeof(account_key_list));

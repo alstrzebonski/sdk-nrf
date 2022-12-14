@@ -78,6 +78,15 @@ int fp_storage_account_key_find(struct fp_account_key *account_key,
 				fp_storage_account_key_check_cb account_key_check_cb,
 				void *context);
 
+/** Clear stored Account Keys from RAM and settings.
+ *
+ * The function is vulnerable to power down.
+ * The function is meant to be used by fp_storage_reset module.
+ *
+ * @return 0 If the operation was successful. Otherwise, a (negative) error code is returned.
+*/
+int fp_storage_delete(void);
+
 /** Clear storage data loaded to RAM.
  *
  * The function is used only by fp_storage unit test.

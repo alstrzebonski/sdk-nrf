@@ -47,6 +47,15 @@ int fp_storage_pn_save(const char *pn_to_save);
  */
 int fp_storage_pn_get(char *buf);
 
+/** Clear stored Personalized Name from RAM and settings.
+ *
+ * The function is vulnerable to power down.
+ * The function is meant to be used by fp_storage_reset module.
+ *
+ * @return 0 If the operation was successful. Otherwise, a (negative) error code is returned.
+*/
+int fp_storage_pn_delete(void);
+
 #ifdef __cplusplus
 }
 #endif
