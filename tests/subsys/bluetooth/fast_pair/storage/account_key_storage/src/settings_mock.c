@@ -53,11 +53,13 @@ static int settings_mock_load(struct settings_store *cs, const struct settings_l
 	SYS_SLIST_FOR_EACH_NODE(&settings_list, cur_node) {
 		struct settings_data *data = CONTAINER_OF(cur_node, struct settings_data, node);
 
-		err = settings_call_set_handler(data->name, data->val_len, settings_mock_read_fn,
-						data, arg);
+		if (data->val_len > 0) {
+			err = settings_call_set_handler(data->name, data->val_len,
+							settings_mock_read_fn, data, arg);
 
-		if (err) {
-			break;
+			if (err) {
+				break;
+			}
 		}
 	}
 
