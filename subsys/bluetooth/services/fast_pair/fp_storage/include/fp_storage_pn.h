@@ -47,6 +47,12 @@ int fp_storage_pn_save(const char *pn_to_save);
  */
 int fp_storage_pn_get(char *buf);
 
+/** Clear storage data loaded to RAM.
+ *
+ * The function is used only by fp_storage unit test.
+ */
+void fp_storage_pn_ram_clear(void);
+
 #ifdef __cplusplus
 }
 #endif
