@@ -81,6 +81,13 @@ static int settings_mock_save(struct settings_store *cs, const char *name, const
 		record = CONTAINER_OF(cur_node, struct settings_data, node);
 
 		if (!strcmp(record->name, name)) {
+			if (val_len == 0) {
+				bool ret;
+
+				ret = sys_slist_find_and_remove(&settings_list, cur_node);
+				zassert_true(ret, "Unable to delete settings item");
+			}
+
 			if (val_len != record->val_len) {
 				k_free(record->val);
 
@@ -92,6 +99,10 @@ static int settings_mock_save(struct settings_store *cs, const char *name, const
 			memcpy(record->val, value, val_len);
 			return 0;
 		}
+	}
+
+	if (val_len == 0) {
+		return 0;
 	}
 
 	record = k_malloc(sizeof(*record));
