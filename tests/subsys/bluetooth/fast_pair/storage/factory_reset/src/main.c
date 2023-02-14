@@ -424,8 +424,6 @@ static void test_interrupted_reset_begin(void)
 	ztest_test_fail();
 }
 
-static void test_interrupted_reset_begin_teardown_fn(void) {}
-
 static void test_interrupted_reset_finish_setup_fn(void)
 {
 	int err;
@@ -461,6 +459,7 @@ static void normal_test_stage_finalize(void)
 	__ASSERT(!err, "Unexpected error in test settings (err %d)", err);
 
 	/* Reboot to finish the interrupted reset test. */
+	//sys_reboot(SYS_REBOOT_COLD);
 	sys_reboot(SYS_REBOOT_WARM);
 }
 
@@ -476,6 +475,7 @@ void test_main(void)
 
 	switch (test_stage) {
 	case RESET_TEST_STAGE_NORMAL:
+		;
 		/* The test_interrupted_reset_begin test must be placed last in the suite, it
 		 * triggers sys_reboot.
 		 */
@@ -487,7 +487,7 @@ void test_main(void)
 				 ztest_unit_test_setup_teardown(
 							test_interrupted_reset_begin,
 							setup_fn,
-							test_interrupted_reset_begin_teardown_fn)
+							unit_test_noop)
 				 );
 
 		ztest_run_test_suite(fast_pair_storage_factory_reset_normal_tests);
@@ -497,6 +497,7 @@ void test_main(void)
 		break;
 
 	case RESET_TEST_STAGE_INTERRUPTED:
+		;
 		ztest_test_suite(fast_pair_storage_factory_reset_interrupted_tests_continue,
 				 ztest_unit_test_setup_teardown(
 							test_interrupted_reset_finish,
