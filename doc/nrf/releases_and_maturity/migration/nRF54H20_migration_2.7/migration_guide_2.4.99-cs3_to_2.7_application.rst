@@ -74,6 +74,36 @@ General
 
      The previously used SOC1-based board files have been removed.
 
+CoreMark
+--------
+
+.. toggle::
+
+   * Several changes have been made to migrate the :ref:`coremark_sample` sample from the nRF54 customer sampling release v2.4.99-cs3 to |NCS| v2.7.0:
+
+     * The sample has been moved from the :file:`<ncs_path>/zephyr/samples/benchmarks/coremark` folder in the Zephyr repository to the :file:`<ncs_path>/nrf/samples/benchmarks/coremark` folder in the main |NCS| repository.
+     * The build system has been aligned to the hardware model v2.
+       The ``SB_CONFIG_IMAGE_2_BOARD`` and ``SB_CONFIG_IMAGE_3_BOARD`` Kconfig options have been replaced with the ``SB_CONFIG_APP_CPUNET_RUN`` and ``SB_CONFIG_APP_CPUPPR_RUN`` Kconfig options.
+       The new Kconfig options more clearly indicate on which cores the sample will be run.
+       See the :file:`sysbuild.cmake` file to find out how these options are used to determine the board target.
+     * Because the |NCS| v2.7.0 does not support ARM Coresight System Trace Macrocell (STM) logging for the nRF54 device, STM logging has been removed from the sample.
+       The sample now uses usual UART logging, which allows for sending logs from only one core for each UART instance.
+       The nRF54 device has only two UART instances, so the sample can now be run on two cores at most.
+       The sample is always run on the application core, and depending on configuration, it can be run on either the radio core or the PPR core.
+       See the ``SB_CONFIG_APP_CPUNET_RUN`` and ``SB_CONFIG_APP_CPUPPR_RUN`` Kconfig options for more details.
+     * The DTS overlays have been aligned to the |NCS| v2.7.0.
+     * The :file:`system_nrf.h` library has been included explicitly in the :file:`main.c` file to print the CPU frequency.
+     * The ``SB_CONFIG_PARTITION_MANAGER`` Kconfig option has been disabled in the :file:`sysbuild.conf` file to avoid conflicts with the Partition Manager.
+     * The :kconfig:option:`CONFIG_APP_MODE_FLASH_AND_RUN` Kconfig option has been made promptless and enabled for the PPR core.
+       Currently, the PPR core does not have access to buttons and thus, the :kconfig:option:`CONFIG_APP_MODE_FLASH_AND_RUN` Kconfig option must be enabled for this core to run the benchmark.
+     * To make the sample run on the PPR core, pass the ``-DSB_CONFIG_APP_CPUNET_RUN=n -DSB_CONFIG_APP_CPUPPR_RUN=y -Dcoremark_SNIPPET=nordic-ppr-xip`` build-time arguments to the build system.
+       The ``coremark_SNIPPET`` argument is set to make the application core start the PPR core.
+       Alternatively, you can build the sample from the :file:`sample.yaml` file using the following command:
+
+       .. code-block:: console
+
+          west build -p -b nrf54h20dk/nrf54h20/cpuapp -T sample.benchmark.coremark_ppr_xip .
+
 Security
 ========
 
