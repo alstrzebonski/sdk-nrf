@@ -392,7 +392,8 @@ static void ble_adv_start(void)
 {
 	__ASSERT_NO_MSG((state == STATE_ACTIVE) || (state == STATE_GRACE_PERIOD));
 
-	int err = bt_le_adv_stop();
+	// int err = bt_le_adv_stop();
+	int err = 0;
 
 	if (err) {
 		LOG_ERR("Cannot stop advertising (err %d)", err);
@@ -405,10 +406,13 @@ static void ble_adv_start(void)
 	}
 
 	if (direct_adv) {
-		err = ble_adv_start_directed();
+		// err = ble_adv_start_directed();
+		//////////////////
 	} else {
-		err = ble_adv_start_undirected();
+		// err = ble_adv_start_undirected();
+		///////////////////
 	}
+	err = 0;
 
 	if (err) {
 		LOG_ERR("Advertising failed to start (err %d)", err);
@@ -926,7 +930,8 @@ static bool handle_ble_peer_event(const struct ble_peer_event *event)
 static bool handle_ble_adv_data_update_event(const struct ble_adv_data_update_event *event)
 {
 	ARG_UNUSED(event);
-	ble_adv_data_update();
+	// ble_adv_data_update();
+	//////////////////////
 
 	return false;
 }
