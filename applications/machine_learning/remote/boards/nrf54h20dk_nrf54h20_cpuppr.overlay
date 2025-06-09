@@ -14,6 +14,28 @@
 		memory-region = <&ram3x_agg_area0>;
 		status = "okay";
 	};
+
+	cpus {
+		power-states {
+			wait: wait {
+				compatible = "zephyr,power-state";
+				power-state-name = "standby";
+				substate-id = <0>;
+				min-residency-us = <100>;
+			};
+
+			hibernate: hibernate {
+				compatible = "zephyr,power-state";
+				power-state-name = "suspend-to-ram";
+				substate-id = <0>;
+				min-residency-us = <1000>;
+			};
+		};
+	};
+};
+
+&cpu {
+	cpu-power-states = <&wait &hibernate>;
 };
 
 /* Expand APP slot partition and remove DFU partition. */

@@ -8,6 +8,12 @@ menu "Machine learning application (remote core)"
 
 rsource "../common/Kconfig"
 
+config APP_PROVIDE_PM_HOOKS
+	bool "Application provides PM hooks"
+	default y
+	select HAS_PM
+	select HAS_POWEROFF
+
 endmenu
 
 menu "Zephyr Kernel"
