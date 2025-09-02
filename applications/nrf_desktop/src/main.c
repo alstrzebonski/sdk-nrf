@@ -15,6 +15,44 @@ LOG_MODULE_REGISTER(MODULE);
 
 #include <hal/nrf_rramc.h>
 
+#define PROFILE_CACHE 1
+#if PROFILE_CACHE
+#include <hal/nrf_cache.h>
+static uint32_t ihits;
+static uint32_t imisses;
+#endif
+#define CACHE_INVALIDATE 0
+
+static void cache_profiling_init(void)
+{
+#if PROFILE_CACHE
+	nrf_cache_profiling_set(NRF_ICACHE, 1);
+#endif
+}
+
+static void cache_profiling_clear(void)
+{
+#if PROFILE_CACHE
+	nrf_cache_profiling_counters_clear(NRF_ICACHE);
+#endif
+}
+
+static void cache_stats_update(void)
+{	
+#if PROFILE_CACHE
+	ihits = nrf_cache_data_hit_counter_get(NRF_ICACHE, 0);
+	imisses = nrf_cache_data_miss_counter_get(NRF_ICACHE, 0);
+#endif
+}
+
+static void cache_stats_print(void)
+{
+#if PROFILE_CACHE
+	printk("\tInstr cache hits: %u\n", ihits);
+	printk("\tInstr cache misses: %u\n", imisses);
+#endif
+}
+
 
 int main(void)
 {
@@ -38,6 +76,14 @@ int main(void)
 	} else {
 		module_set_state(MODULE_STATE_READY);
 	}
-	// while(1) {}
+	#if PROFILE_CACHE
+	cache_profiling_init();
+	while(1) {
+		cache_stats_update();
+		cache_stats_print();
+		cache_profiling_clear();
+		k_sleep(K_SECONDS(5));
+	}
+	#endif
 	return 0;
 }
