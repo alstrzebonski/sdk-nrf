@@ -19,6 +19,7 @@
 #include <zephyr/usb/usb_ch9.h>
 #include <zephyr/usb/class/usb_hid.h>
 #include <zephyr/usb/class/usbd_hid.h>
+#include <zephyr/drivers/gpio.h>
 
 #define MODULE usb_state
 #include <caf/events/module_state_event.h>
@@ -134,6 +135,27 @@ BUILD_ASSERT(CONFIG_UDC_DWC2_USBHS_VBUS_READY_TIMEOUT > 0,
 	     "Timeout must be set to prevent the usbd_enable() function from blocking the "
 	     "application forever when the USB cable is not connected.");
 #endif
+
+static const struct device *const gpio_dev = DEVICE_DT_GET(DT_NODELABEL(gpio3));
+
+// GPIO pin numbers for signaling HID device ops callbacks
+#define GPIO_PIN_IFACE_READY      2
+#define GPIO_PIN_GET_REPORT       3
+#define GPIO_PIN_SET_REPORT       4
+#define GPIO_PIN_SET_IDLE         5
+#define GPIO_PIN_GET_IDLE         6
+#define GPIO_PIN_SET_PROTOCOL     7
+#define GPIO_PIN_INPUT_REPORT_DONE 8
+#define GPIO_PIN_SOF              9
+#define GPIO_PIN_SUBMIT_REPORT    10
+
+static inline void gpio_toggle_pin(int pin)
+{
+	if (device_is_ready(gpio_dev)) {
+		gpio_pin_toggle(gpio_dev, pin);
+	}
+}
+
 
 static struct usbd_context *usbd_ctx;
 static bool usb_enabled;
@@ -270,7 +292,9 @@ static void usb_hid_buf_send(struct usb_hid_device *usb_hid, struct usb_hid_buf 
 	int err;
 
 	if (IS_ENABLED(CONFIG_DESKTOP_USB_STACK_NEXT)) {
+		gpio_toggle_pin(GPIO_PIN_SUBMIT_REPORT);
 		err = hid_device_submit_report(usb_hid->dev, size, data);
+		gpio_toggle_pin(GPIO_PIN_SUBMIT_REPORT);
 	} else {
 		__ASSERT_NO_MSG(IS_ENABLED(CONFIG_DESKTOP_USB_STACK_LEGACY));
 		err = hid_int_ep_write(usb_hid->dev, data, size, NULL);
@@ -636,6 +660,8 @@ static void update_usb_hid(struct usb_hid_device *usb_hid, bool enabled)
 
 static void protocol_change(const struct device *dev, uint8_t protocol)
 {
+	gpio_toggle_pin(GPIO_PIN_SET_PROTOCOL);
+	
 	/* Ensure that the function is executed in a cooperative thread context and no extra
 	 * synchronization is required.
 	 */
@@ -662,17 +688,20 @@ static void protocol_change(const struct device *dev, uint8_t protocol)
 	if ((protocol != HID_PROTOCOL_BOOT) &&
 	    (protocol != HID_PROTOCOL_REPORT)) {
 		__ASSERT_NO_MSG(false);
+		gpio_toggle_pin(GPIO_PIN_SET_PROTOCOL);
 		return;
 	}
 
 	if (IS_ENABLED(CONFIG_DESKTOP_HID_BOOT_INTERFACE_DISABLED) &&
 	    (protocol == HID_PROTOCOL_BOOT)) {
 		LOG_WRN("BOOT protocol is not supported");
+		gpio_toggle_pin(GPIO_PIN_SET_PROTOCOL);
 		return;
 	}
 
 	if (usb_hid->hid_protocol == protocol) {
 		/* Already updated. */
+		gpio_toggle_pin(GPIO_PIN_SET_PROTOCOL);
 		return;
 	}
 
@@ -681,6 +710,8 @@ static void protocol_change(const struct device *dev, uint8_t protocol)
 	if (usb_hid->enabled) {
 		broadcast_subscription_change(usb_hid);
 	}
+	
+	gpio_toggle_pin(GPIO_PIN_SET_PROTOCOL);
 }
 
 static void usb_wakeup(void)
@@ -1038,6 +1069,8 @@ static bool is_usb_active_next(void)
 
 static void iface_ready_next(const struct device *dev, const bool ready)
 {
+	gpio_toggle_pin(GPIO_PIN_IFACE_READY);
+	
 	struct usb_hid_device *usb_hid = dev_to_usb_hid(dev);
 	bool was_usb_active = is_usb_active_next();
 
@@ -1047,6 +1080,7 @@ static void iface_ready_next(const struct device *dev, const bool ready)
 
 	if (state == USB_STATE_SUSPENDED) {
 		/* USB state update is delayed if USB is suspended. */
+		gpio_toggle_pin(GPIO_PIN_IFACE_READY);
 		return;
 	}
 
@@ -1055,42 +1089,63 @@ static void iface_ready_next(const struct device *dev, const bool ready)
 	} else if (was_usb_active && !is_usb_active) {
 		broadcast_usb_state(state);
 	}
+	
+	gpio_toggle_pin(GPIO_PIN_IFACE_READY);
 }
 
 static int get_report_next(const struct device *dev, const uint8_t type, const uint8_t id,
 			   const uint16_t len, uint8_t *const buf)
 {
+	gpio_toggle_pin(GPIO_PIN_GET_REPORT);
+	
 	/* Omit the first byte - HID report ID. */
 	buf[0] = id;
 
 	int err = get_report(dev, type, id, buf + 1, len - 1);
 
+	gpio_toggle_pin(GPIO_PIN_GET_REPORT);
 	return err ? err : len;
 }
 
 static int set_report_next(const struct device *dev, const uint8_t type, const uint8_t id,
 			   const uint16_t len, const uint8_t *const buf)
 {
+	gpio_toggle_pin(GPIO_PIN_SET_REPORT);
+	
 	/* Omit the first byte - HID report ID. */
-	return set_report(dev, type, id, buf + 1, len - 1);
+	int result = set_report(dev, type, id, buf + 1, len - 1);
+	
+	gpio_toggle_pin(GPIO_PIN_SET_REPORT);
+	return result;
 }
 
 static void set_idle_next(const struct device *dev, const uint8_t id, const uint32_t duration)
 {
+	gpio_toggle_pin(GPIO_PIN_SET_IDLE);
+	
 	struct usb_hid_device *usb_hid = dev_to_usb_hid(dev);
 
 	usb_hid->idle_duration[id] = duration;
+	
+	gpio_toggle_pin(GPIO_PIN_SET_IDLE);
 }
 
 static uint32_t get_idle_next(const struct device *dev, const uint8_t id)
 {
+	gpio_toggle_pin(GPIO_PIN_GET_IDLE);
+	
 	struct usb_hid_device *usb_hid = dev_to_usb_hid(dev);
 
-	return usb_hid->idle_duration[id];
+	uint32_t result = usb_hid->idle_duration[id];
+	
+	gpio_toggle_pin(GPIO_PIN_GET_IDLE);
+	return result;
 }
 
 static void report_sent_cb_next(const struct device *dev, const uint8_t *report)
 {
+	gpio_toggle_pin(GPIO_PIN_INPUT_REPORT_DONE);
+	
 	struct usb_hid_device *usb_hid = dev_to_usb_hid(dev);
 	struct usb_hid_buf *buf = usb_hid_buf_find(usb_hid, USB_HID_BUF_SENDING);
 	/* USB next stack does not explicitly indicate failed transfers. */
@@ -1099,11 +1154,17 @@ static void report_sent_cb_next(const struct device *dev, const uint8_t *report)
 	ARG_UNUSED(report);
 
 	report_sent(usb_hid, buf, error);
+	
+	gpio_toggle_pin(GPIO_PIN_INPUT_REPORT_DONE);
 }
 
 static void sof_next(const struct device *dev)
 {
+	gpio_toggle_pin(GPIO_PIN_SOF);
+	
 	report_sent_sof(dev_to_usb_hid(dev));
+	
+	gpio_toggle_pin(GPIO_PIN_SOF);
 }
 
 static int usb_init_next_hid_device_init(struct usb_hid_device *usb_hid_dev, uint32_t report_bm)
@@ -1461,6 +1522,19 @@ static int usb_init(void)
 	int err = 0;
 
 	verify_report_bm();
+
+	/* Initialize GPIO pins for HID callback signaling */
+	if (device_is_ready(gpio_dev)) {
+		gpio_pin_configure(gpio_dev, GPIO_PIN_IFACE_READY, GPIO_OUTPUT_INACTIVE);
+		gpio_pin_configure(gpio_dev, GPIO_PIN_GET_REPORT, GPIO_OUTPUT_INACTIVE);
+		gpio_pin_configure(gpio_dev, GPIO_PIN_SET_REPORT, GPIO_OUTPUT_INACTIVE);
+		gpio_pin_configure(gpio_dev, GPIO_PIN_SET_IDLE, GPIO_OUTPUT_INACTIVE);
+		gpio_pin_configure(gpio_dev, GPIO_PIN_GET_IDLE, GPIO_OUTPUT_INACTIVE);
+		gpio_pin_configure(gpio_dev, GPIO_PIN_SET_PROTOCOL, GPIO_OUTPUT_INACTIVE);
+		gpio_pin_configure(gpio_dev, GPIO_PIN_INPUT_REPORT_DONE, GPIO_OUTPUT_INACTIVE);
+		gpio_pin_configure(gpio_dev, GPIO_PIN_SOF, GPIO_OUTPUT_INACTIVE);
+		gpio_pin_configure(gpio_dev, GPIO_PIN_SUBMIT_REPORT, GPIO_OUTPUT_INACTIVE);
+	}
 
 	if (IS_ENABLED(CONFIG_DESKTOP_CONFIG_CHANNEL_ENABLE)) {
 		config_channel_transport_init(&cfg_chan_transport);
