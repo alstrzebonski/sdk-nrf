@@ -168,6 +168,9 @@ static uint8_t usb_hid_buf_get_report_id(struct usb_hid_buf *buf)
 {
 	__ASSERT_NO_MSG(buf->status_bm & USB_HID_BUF_ALLOCATED);
 	uint8_t report_id = REPORT_ID_COUNT;
+	if (!buf) {
+		return report_id;
+	}
 
 	if (!(buf->status_bm & USB_HID_BUF_BOOT_REPORT_FORMAT)) {
 		report_id = buf->data[0];
@@ -206,6 +209,7 @@ static struct usb_hid_buf *usb_hid_buf_alloc(struct usb_hid_device *usb_hid, con
 
 static void usb_hid_buf_free(struct usb_hid_buf *report_buf)
 {
+	if (report_buf)
 	report_buf->status_bm = 0;
 }
 
@@ -531,7 +535,11 @@ static bool handle_hid_report_event(struct hid_report_event *event)
 	/* Send HID report instantly only if there is no report that is currently being sent.
 	 * Otherwise wait until the previous report is sent.
 	 */
+	static bool double_queued = false;
 	if (!sending_buf) {
+		usb_hid_buf_send(usb_hid, new_buf);
+	} else if (!double_queued) {
+		double_queued = true;
 		usb_hid_buf_send(usb_hid, new_buf);
 	} else {
 		__ASSERT_NO_MSG(sending_buf->status_bm & USB_HID_BUF_ALLOCATED);
