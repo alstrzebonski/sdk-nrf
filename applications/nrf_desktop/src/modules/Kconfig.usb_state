@@ -187,7 +187,7 @@ endif # DESKTOP_USB_STACK_LEGACY
 if DESKTOP_USB_STACK_NEXT
 
 config USBD_HID_IN_BUF_COUNT
-	default 2 if DESKTOP_USB_HID_REPORT_SENT_ON_SOF
+	default 3 if DESKTOP_USB_HID_REPORT_SENT_ON_SOF
 	default 1
 	help
 	  nRF Desktop queues HID reports at the source. Generally there is no

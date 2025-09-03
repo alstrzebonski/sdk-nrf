@@ -46,7 +46,7 @@ LOG_MODULE_REGISTER(MODULE, CONFIG_DESKTOP_USB_STATE_LOG_LEVEL);
 #define REPORT_TYPE_FEATURE	0x03
 
 #define USB_SUBSCRIBER_PRIORITY      CONFIG_DESKTOP_USB_SUBSCRIBER_REPORT_PRIORITY
-#define USB_SUBSCRIBER_PIPELINE_SIZE (IS_ENABLED(CONFIG_DESKTOP_USB_HID_REPORT_SENT_ON_SOF) ? 2 : 1)
+#define USB_SUBSCRIBER_PIPELINE_SIZE 3//(IS_ENABLED(CONFIG_DESKTOP_USB_HID_REPORT_SENT_ON_SOF) ? 2 : 1)
 #define USB_SUBSCRIBER_REPORT_MAX    USB_SUBSCRIBER_PIPELINE_SIZE
 
 /* The definitions are available and used only for USB legacy stack.
@@ -479,7 +479,7 @@ static void report_sent(struct usb_hid_device *usb_hid, struct usb_hid_buf *buf,
 	/* Module uses very simple HID report buffering implementation that supports up to 2
 	 * buffers. Configuring more buffers could break order of sent HID reports.
 	 */
-	BUILD_ASSERT(ARRAY_SIZE(usb_hid->report_bufs) <= 2);
+	// BUILD_ASSERT(ARRAY_SIZE(usb_hid->report_bufs) <= 2);
 	/* Make sure no report is currently being sent. */
 	__ASSERT_NO_MSG(!usb_hid_buf_find(usb_hid, USB_HID_BUF_SENDING));
 
@@ -488,6 +488,10 @@ static void report_sent(struct usb_hid_device *usb_hid, struct usb_hid_buf *buf,
 
 	if (next_buf) {
 		usb_hid_buf_send(usb_hid, next_buf);
+		// if (!double_queued) {
+		// 	double_queued = true;
+		// 	usb_hid_buf_send(usb_hid, next_buf);
+		// }
 	}
 }
 
@@ -1145,6 +1149,14 @@ static uint32_t get_idle_next(const struct device *dev, const uint8_t id)
 static void report_sent_cb_next(const struct device *dev, const uint8_t *report)
 {
 	gpio_toggle_pin(GPIO_PIN_INPUT_REPORT_DONE);
+	// static int cnt = 0;
+	// if (cnt < 2) {
+	// 	cnt++;
+	// 	if (cnt == 2) {
+	// 		gpio_toggle_pin(GPIO_PIN_INPUT_REPORT_DONE);
+	// 		return;
+	// 	}
+	// }
 	
 	struct usb_hid_device *usb_hid = dev_to_usb_hid(dev);
 	struct usb_hid_buf *buf = usb_hid_buf_find(usb_hid, USB_HID_BUF_SENDING);
