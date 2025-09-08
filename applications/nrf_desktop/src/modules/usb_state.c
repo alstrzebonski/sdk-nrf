@@ -75,6 +75,8 @@ BUILD_ASSERT(REPORT_BUFFER_SIZE_INPUT_REPORT <= UINT8_MAX);
 				     sizeof(void *)))
 #endif /* CONFIG_DESKTOP_USB_STACK_NEXT */
 
+static int usb_stack_report_cnt = 0;
+
 /* Ensuring memory alignment and size for a sent buffer is required by USB next stack. */
 struct usb_hid_buf {
 	uint8_t data[_USB_HID_BUF_SIZE];
@@ -148,6 +150,7 @@ static const struct device *const gpio_dev = DEVICE_DT_GET(DT_NODELABEL(gpio3));
 #define GPIO_PIN_INPUT_REPORT_DONE 8
 #define GPIO_PIN_SOF              9
 #define GPIO_PIN_SUBMIT_REPORT    10
+#define GPIO_PIN_NEW_HID_REPORT   11
 
 static inline void gpio_toggle_pin(int pin)
 {
@@ -168,9 +171,9 @@ static uint8_t usb_hid_buf_get_report_id(struct usb_hid_buf *buf)
 {
 	__ASSERT_NO_MSG(buf->status_bm & USB_HID_BUF_ALLOCATED);
 	uint8_t report_id = REPORT_ID_COUNT;
-	if (!buf) {
-		return report_id;
-	}
+	// if (!buf) {
+	// 	return report_id;
+	// }
 
 	if (!(buf->status_bm & USB_HID_BUF_BOOT_REPORT_FORMAT)) {
 		report_id = buf->data[0];
@@ -200,6 +203,7 @@ static struct usb_hid_buf *usb_hid_buf_alloc(struct usb_hid_device *usb_hid, con
 			memcpy(r->data, data, size);
 			r->size = size;
 			r->status_bm |= USB_HID_BUF_ALLOCATED;
+			LOG_INF("allocated %p\n", r);
 			return r;
 		}
 	}
@@ -209,8 +213,9 @@ static struct usb_hid_buf *usb_hid_buf_alloc(struct usb_hid_device *usb_hid, con
 
 static void usb_hid_buf_free(struct usb_hid_buf *report_buf)
 {
-	if (report_buf)
+	// if (report_buf)
 	report_buf->status_bm = 0;
+	LOG_INF("freed %p\n", report_buf);
 }
 
 static struct usb_hid_buf *usb_hid_buf_find(struct usb_hid_device *usb_hid, uint8_t status_bm)
@@ -272,6 +277,17 @@ static bool can_send_hid_report(struct usb_hid_device *usb_hid, uint8_t report_i
 
 static void usb_hid_buf_send(struct usb_hid_device *usb_hid, struct usb_hid_buf *buf)
 {
+	if (usb_stack_report_cnt >= 2) {
+		LOG_WRN("usb_stack_report_cnt >= 2");
+		return;
+	}
+
+	if (!buf) {
+		LOG_ERR("buf is NULL");
+		return;
+	}
+
+	LOG_INF("usb_hid_buf_send %p\n", buf);
 	uint8_t report_id = usb_hid_buf_get_report_id(buf);
 
 	buf->status_bm |= USB_HID_BUF_SENDING;
@@ -307,6 +323,8 @@ static void usb_hid_buf_send(struct usb_hid_device *usb_hid, struct usb_hid_buf 
 	if (err) {
 		LOG_ERR("Failed to submit report to USB stack (%d)", err);
 		report_sent(usb_hid, buf, true);
+	} else {
+		usb_stack_report_cnt++;
 	}
 }
 
@@ -439,6 +457,7 @@ static void report_sent_sof(struct usb_hid_device *usb_hid)
 
 static void report_sent(struct usb_hid_device *usb_hid, struct usb_hid_buf *buf, bool error)
 {
+	LOG_INF("report_sent %p\n", buf);
 	/* Ensure that the function is executed in a cooperative thread context and no extra
 	 * synchronization is required.
 	 */
@@ -478,24 +497,40 @@ static void report_sent(struct usb_hid_device *usb_hid, struct usb_hid_buf *buf,
 		}
 	}
 
-	usb_hid_buf_free(buf);
+	// usb_hid_buf_free(buf);
 
 	/* Module uses very simple HID report buffering implementation that supports up to 2
 	 * buffers. Configuring more buffers could break order of sent HID reports.
 	 */
 	// BUILD_ASSERT(ARRAY_SIZE(usb_hid->report_bufs) <= 2);
 	/* Make sure no report is currently being sent. */
-	__ASSERT_NO_MSG(!usb_hid_buf_find(usb_hid, USB_HID_BUF_SENDING));
+	// __ASSERT_NO_MSG(!usb_hid_buf_find(usb_hid, USB_HID_BUF_SENDING));
 
 	/* Send subsequent HID report if queued. */
-	struct usb_hid_buf *next_buf = usb_hid_buf_find(usb_hid, USB_HID_BUF_ALLOCATED);
+	// struct usb_hid_buf *next_buf = usb_hid_buf_find(usb_hid, USB_HID_BUF_ALLOCATED);
+	struct usb_hid_buf *next_buf = NULL;
+	for (size_t i = 0; i < ARRAY_SIZE(usb_hid->report_bufs); i++) {
+		struct usb_hid_buf *r = &usb_hid->report_bufs[i];
+
+		if ((r->status_bm & USB_HID_BUF_ALLOCATED) && !(r->status_bm & USB_HID_BUF_SENDING)) {
+			next_buf = r;
+			break;
+		}
+	}
 
 	if (next_buf) {
+		usb_hid_buf_free(buf);
 		usb_hid_buf_send(usb_hid, next_buf);
 		// if (!double_queued) {
 		// 	double_queued = true;
 		// 	usb_hid_buf_send(usb_hid, next_buf);
 		// }
+	} else {
+		uint8_t *data = buf->data;
+		size_t size = buf->size;
+		gpio_toggle_pin(GPIO_PIN_SUBMIT_REPORT);
+		hid_device_submit_report(usb_hid->dev, size, data);
+		gpio_toggle_pin(GPIO_PIN_SUBMIT_REPORT);
 	}
 }
 
@@ -512,6 +547,7 @@ static struct usb_hid_device *subscriber_to_usb_hid(const void *subscriber)
 
 static bool handle_hid_report_event(struct hid_report_event *event)
 {
+	gpio_toggle_pin(GPIO_PIN_NEW_HID_REPORT);
 	/* Ensure that the function is executed in a cooperative thread context and no extra
 	 * synchronization is required.
 	 */
@@ -530,20 +566,23 @@ static bool handle_hid_report_event(struct hid_report_event *event)
 	struct usb_hid_buf *sending_buf = usb_hid_buf_find(usb_hid, USB_HID_BUF_SENDING);
 	struct usb_hid_buf *new_buf = usb_hid_buf_alloc(usb_hid, data, size);
 
-	__ASSERT_NO_MSG(new_buf);
+	// __ASSERT_NO_MSG(new_buf);
 
 	/* Send HID report instantly only if there is no report that is currently being sent.
 	 * Otherwise wait until the previous report is sent.
 	 */
-	static bool double_queued = false;
-	if (!sending_buf) {
-		usb_hid_buf_send(usb_hid, new_buf);
-	} else if (!double_queued) {
-		double_queued = true;
-		usb_hid_buf_send(usb_hid, new_buf);
-	} else {
-		__ASSERT_NO_MSG(sending_buf->status_bm & USB_HID_BUF_ALLOCATED);
-	}
+	usb_hid_buf_send(usb_hid, new_buf);
+	// static bool double_queued = false;
+	// if (!sending_buf) {
+	// 	usb_hid_buf_send(usb_hid, new_buf);
+	// } else if (!double_queued) {
+	// 	double_queued = true;
+	// 	usb_hid_buf_send(usb_hid, new_buf);
+	// } else {
+	// 	__ASSERT_NO_MSG(sending_buf->status_bm & USB_HID_BUF_ALLOCATED);
+	// }
+
+	gpio_toggle_pin(GPIO_PIN_NEW_HID_REPORT);
 
 	return false;
 }
@@ -1157,6 +1196,7 @@ static uint32_t get_idle_next(const struct device *dev, const uint8_t id)
 static void report_sent_cb_next(const struct device *dev, const uint8_t *report)
 {
 	gpio_toggle_pin(GPIO_PIN_INPUT_REPORT_DONE);
+	usb_stack_report_cnt--;
 	// static int cnt = 0;
 	// if (cnt < 2) {
 	// 	cnt++;
@@ -1554,6 +1594,7 @@ static int usb_init(void)
 		gpio_pin_configure(gpio_dev, GPIO_PIN_INPUT_REPORT_DONE, GPIO_OUTPUT_INACTIVE);
 		gpio_pin_configure(gpio_dev, GPIO_PIN_SOF, GPIO_OUTPUT_INACTIVE);
 		gpio_pin_configure(gpio_dev, GPIO_PIN_SUBMIT_REPORT, GPIO_OUTPUT_INACTIVE);
+		gpio_pin_configure(gpio_dev, GPIO_PIN_NEW_HID_REPORT, GPIO_OUTPUT_INACTIVE);
 	}
 
 	if (IS_ENABLED(CONFIG_DESKTOP_CONFIG_CHANNEL_ENABLE)) {
