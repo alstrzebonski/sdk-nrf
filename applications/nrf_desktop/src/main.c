@@ -15,7 +15,7 @@ LOG_MODULE_REGISTER(MODULE);
 
 #include <hal/nrf_rramc.h>
 
-#define PROFILE_CACHE 0
+#define PROFILE_CACHE 1
 #if PROFILE_CACHE
 #include <hal/nrf_cache.h>
 static uint32_t ihits;

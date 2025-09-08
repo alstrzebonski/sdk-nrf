@@ -277,8 +277,8 @@ static bool can_send_hid_report(struct usb_hid_device *usb_hid, uint8_t report_i
 
 static void usb_hid_buf_send(struct usb_hid_device *usb_hid, struct usb_hid_buf *buf)
 {
-	if (usb_stack_report_cnt >= 2) {
-		LOG_WRN("usb_stack_report_cnt >= 2");
+	if (usb_stack_report_cnt >= 1) {
+		LOG_WRN("usb_stack_report_cnt >= 1");
 		return;
 	}
 
@@ -528,8 +528,17 @@ static void report_sent(struct usb_hid_device *usb_hid, struct usb_hid_buf *buf,
 	} else {
 		uint8_t *data = buf->data;
 		size_t size = buf->size;
+		if (usb_stack_report_cnt >= 1) {
+			LOG_WRN("usb_stack_report_cnt >= 1");
+			return;
+		}
 		gpio_toggle_pin(GPIO_PIN_SUBMIT_REPORT);
-		hid_device_submit_report(usb_hid->dev, size, data);
+		int err = hid_device_submit_report(usb_hid->dev, size, data);
+		if (err) {
+			LOG_ERR("Failed to submit report to USB stack (%d)", err);
+		} else {
+			usb_stack_report_cnt++;
+		}
 		gpio_toggle_pin(GPIO_PIN_SUBMIT_REPORT);
 	}
 }
