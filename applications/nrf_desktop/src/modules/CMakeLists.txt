@@ -114,3 +114,6 @@ target_sources_ifdef(CONFIG_DESKTOP_NRF_PROFILER_SYNC_GPIO_ENABLE
 
 target_sources_ifdef(CONFIG_DESKTOP_DVFS
 		     app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dvfs.c)
+
+zephyr_code_relocate(FILES ${ZEPHYR_BASE}/drivers/gpio/gpio_nrfx.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+zephyr_code_relocate(FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)

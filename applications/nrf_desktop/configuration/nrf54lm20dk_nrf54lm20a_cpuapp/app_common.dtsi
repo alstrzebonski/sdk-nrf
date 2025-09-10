@@ -34,6 +34,23 @@
 			label = "LED Conn State";
 		};
 	};
+
+	cpuapp_sram_code: memory@2003fe00 {
+		compatible = "mmio-sram";
+		#address-cells = < 0x1 >;
+		#size-cells = < 0x1 >;
+		ranges = < 0x0 0x2003fe00 0x3fe00 >;
+		status = "okay";
+		reg = < 0x2003fe00 0x3fe00 >;
+	};
+
+};
+
+&cpuapp_sram {
+	compatible = "mmio-sram";
+	/delete-property/ reg;
+	reg = < 0x20000000 0x3fe00 >;
+	ranges = < 0x0 0x20000000 0x3fe00 >;
 };
 
 &pwm20 {

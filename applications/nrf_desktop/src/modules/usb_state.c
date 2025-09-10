@@ -203,7 +203,7 @@ static struct usb_hid_buf *usb_hid_buf_alloc(struct usb_hid_device *usb_hid, con
 			memcpy(r->data, data, size);
 			r->size = size;
 			r->status_bm |= USB_HID_BUF_ALLOCATED;
-			LOG_INF("allocated %p\n", r);
+			// LOG_INF("allocated %p\n", r);
 			return r;
 		}
 	}
@@ -215,7 +215,7 @@ static void usb_hid_buf_free(struct usb_hid_buf *report_buf)
 {
 	// if (report_buf)
 	report_buf->status_bm = 0;
-	LOG_INF("freed %p\n", report_buf);
+	// LOG_INF("freed %p\n", report_buf);
 }
 
 static struct usb_hid_buf *usb_hid_buf_find(struct usb_hid_device *usb_hid, uint8_t status_bm)
@@ -287,7 +287,7 @@ static void usb_hid_buf_send(struct usb_hid_device *usb_hid, struct usb_hid_buf 
 		return;
 	}
 
-	LOG_INF("usb_hid_buf_send %p\n", buf);
+	// LOG_INF("usb_hid_buf_send %p\n", buf);
 	uint8_t report_id = usb_hid_buf_get_report_id(buf);
 
 	buf->status_bm |= USB_HID_BUF_SENDING;
@@ -457,7 +457,7 @@ static void report_sent_sof(struct usb_hid_device *usb_hid)
 
 static void report_sent(struct usb_hid_device *usb_hid, struct usb_hid_buf *buf, bool error)
 {
-	LOG_INF("report_sent %p\n", buf);
+	// LOG_INF("report_sent %p\n", buf);
 	/* Ensure that the function is executed in a cooperative thread context and no extra
 	 * synchronization is required.
 	 */
