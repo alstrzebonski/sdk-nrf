@@ -46,7 +46,7 @@ LOG_MODULE_REGISTER(MODULE, CONFIG_DESKTOP_USB_STATE_LOG_LEVEL);
 #define REPORT_TYPE_FEATURE	0x03
 
 #define USB_SUBSCRIBER_PRIORITY      CONFIG_DESKTOP_USB_SUBSCRIBER_REPORT_PRIORITY
-#define USB_SUBSCRIBER_PIPELINE_SIZE 3//(IS_ENABLED(CONFIG_DESKTOP_USB_HID_REPORT_SENT_ON_SOF) ? 2 : 1)
+#define USB_SUBSCRIBER_PIPELINE_SIZE (IS_ENABLED(CONFIG_DESKTOP_USB_HID_REPORT_SENT_ON_SOF) ? 2 : 1)
 #define USB_SUBSCRIBER_REPORT_MAX    USB_SUBSCRIBER_PIPELINE_SIZE
 
 /* The definitions are available and used only for USB legacy stack.
@@ -277,15 +277,15 @@ static bool can_send_hid_report(struct usb_hid_device *usb_hid, uint8_t report_i
 
 static void usb_hid_buf_send(struct usb_hid_device *usb_hid, struct usb_hid_buf *buf)
 {
-	if (usb_stack_report_cnt >= 1) {
-		LOG_WRN("usb_stack_report_cnt >= 1");
-		return;
-	}
+	// if (usb_stack_report_cnt >= 1) {
+	// 	LOG_WRN("usb_stack_report_cnt >= 1");
+	// 	return;
+	// }
 
-	if (!buf) {
-		LOG_ERR("buf is NULL");
-		return;
-	}
+	// if (!buf) {
+	// 	LOG_ERR("buf is NULL");
+	// 	return;
+	// }
 
 	// LOG_INF("usb_hid_buf_send %p\n", buf);
 	uint8_t report_id = usb_hid_buf_get_report_id(buf);
@@ -451,7 +451,10 @@ static void report_sent_sof(struct usb_hid_device *usb_hid)
 	struct hid_report_sent_event *event = atomic_ptr_set(&usb_hid->report_sent_on_sof, NULL);
 
 	if (event) {
+		// printk("submitting report sent event\n");
 		APP_EVENT_SUBMIT(event);
+	} else {
+		// printk("report sent event is NULL\n");
 	}
 }
 
@@ -486,6 +489,7 @@ static void report_sent(struct usb_hid_device *usb_hid, struct usb_hid_buf *buf,
 			report_sent_sof(usb_hid);
 			APP_EVENT_SUBMIT(event);
 		} else {
+			// printk("setting report sent event\n");
 			if (!atomic_ptr_cas(&usb_hid->report_sent_on_sof, NULL, event)) {
 				/* Instantly submit previous event to ensure proper HID report sent
 				 * event order.
@@ -502,9 +506,9 @@ static void report_sent(struct usb_hid_device *usb_hid, struct usb_hid_buf *buf,
 	/* Module uses very simple HID report buffering implementation that supports up to 2
 	 * buffers. Configuring more buffers could break order of sent HID reports.
 	 */
-	// BUILD_ASSERT(ARRAY_SIZE(usb_hid->report_bufs) <= 2);
+	BUILD_ASSERT(ARRAY_SIZE(usb_hid->report_bufs) <= 2);
 	/* Make sure no report is currently being sent. */
-	// __ASSERT_NO_MSG(!usb_hid_buf_find(usb_hid, USB_HID_BUF_SENDING));
+	__ASSERT_NO_MSG(!usb_hid_buf_find(usb_hid, USB_HID_BUF_SENDING));
 
 	/* Send subsequent HID report if queued. */
 	// struct usb_hid_buf *next_buf = usb_hid_buf_find(usb_hid, USB_HID_BUF_ALLOCATED);
@@ -528,10 +532,10 @@ static void report_sent(struct usb_hid_device *usb_hid, struct usb_hid_buf *buf,
 	} else {
 		uint8_t *data = buf->data;
 		size_t size = buf->size;
-		if (usb_stack_report_cnt >= 1) {
-			LOG_WRN("usb_stack_report_cnt >= 1");
-			return;
-		}
+		// if (usb_stack_report_cnt >= 1) {
+		// 	LOG_WRN("usb_stack_report_cnt >= 1");
+		// 	return;
+		// }
 		gpio_toggle_pin(GPIO_PIN_SUBMIT_REPORT);
 		int err = hid_device_submit_report(usb_hid->dev, size, data);
 		if (err) {
@@ -575,21 +579,21 @@ static bool handle_hid_report_event(struct hid_report_event *event)
 	struct usb_hid_buf *sending_buf = usb_hid_buf_find(usb_hid, USB_HID_BUF_SENDING);
 	struct usb_hid_buf *new_buf = usb_hid_buf_alloc(usb_hid, data, size);
 
-	// __ASSERT_NO_MSG(new_buf);
+	__ASSERT_NO_MSG(new_buf);
 
 	/* Send HID report instantly only if there is no report that is currently being sent.
 	 * Otherwise wait until the previous report is sent.
 	 */
-	usb_hid_buf_send(usb_hid, new_buf);
+	// usb_hid_buf_send(usb_hid, new_buf);
 	// static bool double_queued = false;
-	// if (!sending_buf) {
-	// 	usb_hid_buf_send(usb_hid, new_buf);
-	// } else if (!double_queued) {
+	if (!sending_buf) {
+		usb_hid_buf_send(usb_hid, new_buf);
+	// } //else if (!double_queued) {
 	// 	double_queued = true;
 	// 	usb_hid_buf_send(usb_hid, new_buf);
-	// } else {
-	// 	__ASSERT_NO_MSG(sending_buf->status_bm & USB_HID_BUF_ALLOCATED);
-	// }
+	} else {
+		__ASSERT_NO_MSG(sending_buf->status_bm & USB_HID_BUF_ALLOCATED);
+	}
 
 	gpio_toggle_pin(GPIO_PIN_NEW_HID_REPORT);
 

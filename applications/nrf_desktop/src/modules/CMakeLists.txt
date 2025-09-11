@@ -115,5 +115,65 @@ target_sources_ifdef(CONFIG_DESKTOP_NRF_PROFILER_SYNC_GPIO_ENABLE
 target_sources_ifdef(CONFIG_DESKTOP_DVFS
 		     app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dvfs.c)
 
-zephyr_code_relocate(FILES ${ZEPHYR_BASE}/drivers/gpio/gpio_nrfx.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+# Auto-generated zephyr_code_relocate commands to move all files to LocalCodeRAM_TEXT
+# Generated from build.ninja analysis - relocating all compiled source files (excluding kernel)
+
+# Relocate ALL application-specific files
 zephyr_code_relocate(FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+zephyr_code_relocate(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../events/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+zephyr_code_relocate(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../hw_interface/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+zephyr_code_relocate(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../util/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+zephyr_code_relocate(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../main.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+zephyr_code_relocate(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../configuration/common/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+
+# Relocate core Zephyr files (excluding kernel which can't be relocated)
+#zephyr_code_relocate(FILES ${ZEPHYR_BASE}/arch/arm/core/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+#zephyr_code_relocate(FILES ${ZEPHYR_BASE}/arch/arm/core/cortex_m/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+#zephyr_code_relocate(FILES ${ZEPHYR_BASE}/arch/common/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+zephyr_code_relocate(FILES ${ZEPHYR_BASE}/drivers/*/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+zephyr_code_relocate(FILES ${ZEPHYR_BASE}/drivers/*/*/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+zephyr_code_relocate(FILES ${ZEPHYR_BASE}/subsys/*/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+zephyr_code_relocate(FILES ${ZEPHYR_BASE}/subsys/*/*/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+zephyr_code_relocate(FILES ${ZEPHYR_BASE}/subsys/*/*/*/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+#zephyr_code_relocate(FILES ${ZEPHYR_BASE}/soc/*/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+#zephyr_code_relocate(FILES ${ZEPHYR_BASE}/soc/*/*/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+zephyr_code_relocate(FILES ${ZEPHYR_BASE}/lib/*/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+zephyr_code_relocate(FILES ${ZEPHYR_BASE}/lib/*/*/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+#zephyr_code_relocate(FILES ${ZEPHYR_BASE}/misc/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+#zephyr_code_relocate(FILES ${ZEPHYR_BASE}/misc/generated/configs.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+zephyr_code_relocate(FILES ${ZEPHYR_BASE}/modules/hal_nordic/nrfx/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+
+# Relocate build-generated files
+#zephyr_code_relocate(FILES ${APPLICATION_BINARY_DIR}/zephyr/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+#zephyr_code_relocate(FILES ${APPLICATION_BINARY_DIR}/zephyr/code_relocation.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+#zephyr_code_relocate(FILES ${APPLICATION_BINARY_DIR}/zephyr/isr_tables.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+#zephyr_code_relocate(FILES ${APPLICATION_BINARY_DIR}/zephyr/misc/generated/configs.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+
+# Relocate nRF-specific files
+zephyr_code_relocate(FILES ${NRF_DIR}/subsys/*/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+zephyr_code_relocate(FILES ${NRF_DIR}/subsys/*/*/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+zephyr_code_relocate(FILES ${NRF_DIR}/subsys/*/*/*/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+zephyr_code_relocate(FILES ${NRF_DIR}/subsys/*/*/*/*/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+zephyr_code_relocate(FILES ${NRF_DIR}/drivers/*/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+zephyr_code_relocate(FILES ${NRF_DIR}/lib/*/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+
+# Relocate HAL drivers (excluding mdk)
+zephyr_code_relocate(FILES ${NRFX_DIR}/drivers/src/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+zephyr_code_relocate(FILES ${NRFX_DIR}/helpers/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+
+# Relocate crypto and security files using relative paths
+#zephyr_code_relocate(FILES ${ARM_MBEDTLS_PATH}/library/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+#zephyr_code_relocate(FILES ${OBERON_PSA_CORE_PATH}/library/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+#zephyr_code_relocate(FILES ${OBERON_PSA_CORE_PATH}/programs/ssl/library/*.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+
+# Relocate specific nRF security files (avoiding problematic wildcards)
+#zephyr_code_relocate(FILES ${NRF_SECURITY_ROOT}/src/threading/threading_alt.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+#zephyr_code_relocate(FILES ${NRF_SECURITY_ROOT}/src/utils/nrf_security_events.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+#zephyr_code_relocate(FILES ${NRF_SECURITY_ROOT}/src/utils/nrf_security_mutexes.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+#zephyr_code_relocate(FILES ${NRF_SECURITY_ROOT}/src/zephyr/entropy_poll.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+#zephyr_code_relocate(FILES ${NRF_SECURITY_ROOT}/src/zephyr/mbedtls_heap.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+#zephyr_code_relocate(FILES ${NRF_SECURITY_ROOT}/src/zephyr/psa_crypto_init.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+#zephyr_code_relocate(FILES ${NRF_SECURITY_ROOT}/src/psa_crypto_driver_wrappers.c LOCATION LocalCodeRAM_TEXT NOKEEP)
+
+# Relocate bootloader files (using correct relative path)
+#zephyr_code_relocate(FILES ${ZEPHYR_BASE}/../bootloader/mcuboot/boot/bootutil/src/bootutil_public.c LOCATION LocalCodeRAM_TEXT NOKEEP)
