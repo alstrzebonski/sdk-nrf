@@ -501,7 +501,7 @@ static void report_sent(struct usb_hid_device *usb_hid, struct usb_hid_buf *buf,
 		}
 	}
 
-	// usb_hid_buf_free(buf);
+	usb_hid_buf_free(buf);
 
 	/* Module uses very simple HID report buffering implementation that supports up to 2
 	 * buffers. Configuring more buffers could break order of sent HID reports.
@@ -511,39 +511,39 @@ static void report_sent(struct usb_hid_device *usb_hid, struct usb_hid_buf *buf,
 	__ASSERT_NO_MSG(!usb_hid_buf_find(usb_hid, USB_HID_BUF_SENDING));
 
 	/* Send subsequent HID report if queued. */
-	// struct usb_hid_buf *next_buf = usb_hid_buf_find(usb_hid, USB_HID_BUF_ALLOCATED);
-	struct usb_hid_buf *next_buf = NULL;
-	for (size_t i = 0; i < ARRAY_SIZE(usb_hid->report_bufs); i++) {
-		struct usb_hid_buf *r = &usb_hid->report_bufs[i];
+	struct usb_hid_buf *next_buf = usb_hid_buf_find(usb_hid, USB_HID_BUF_ALLOCATED);
+	// struct usb_hid_buf *next_buf = NULL;
+	// for (size_t i = 0; i < ARRAY_SIZE(usb_hid->report_bufs); i++) {
+	// 	struct usb_hid_buf *r = &usb_hid->report_bufs[i];
 
-		if ((r->status_bm & USB_HID_BUF_ALLOCATED) && !(r->status_bm & USB_HID_BUF_SENDING)) {
-			next_buf = r;
-			break;
-		}
-	}
+	// 	if ((r->status_bm & USB_HID_BUF_ALLOCATED) && !(r->status_bm & USB_HID_BUF_SENDING)) {
+	// 		next_buf = r;
+	// 		break;
+	// 	}
+	// }
 
 	if (next_buf) {
-		usb_hid_buf_free(buf);
+		// usb_hid_buf_free(buf);
 		usb_hid_buf_send(usb_hid, next_buf);
 		// if (!double_queued) {
 		// 	double_queued = true;
 		// 	usb_hid_buf_send(usb_hid, next_buf);
 		// }
 	} else {
-		uint8_t *data = buf->data;
-		size_t size = buf->size;
-		// if (usb_stack_report_cnt >= 1) {
-		// 	LOG_WRN("usb_stack_report_cnt >= 1");
-		// 	return;
+		// uint8_t *data = buf->data;
+		// size_t size = buf->size;
+		// // if (usb_stack_report_cnt >= 1) {
+		// // 	LOG_WRN("usb_stack_report_cnt >= 1");
+		// // 	return;
+		// // }
+		// gpio_toggle_pin(GPIO_PIN_SUBMIT_REPORT);
+		// int err = hid_device_submit_report(usb_hid->dev, size, data);
+		// if (err) {
+		// 	LOG_ERR("Failed to submit report to USB stack (%d)", err);
+		// } else {
+		// 	usb_stack_report_cnt++;
 		// }
-		gpio_toggle_pin(GPIO_PIN_SUBMIT_REPORT);
-		int err = hid_device_submit_report(usb_hid->dev, size, data);
-		if (err) {
-			LOG_ERR("Failed to submit report to USB stack (%d)", err);
-		} else {
-			usb_stack_report_cnt++;
-		}
-		gpio_toggle_pin(GPIO_PIN_SUBMIT_REPORT);
+		// gpio_toggle_pin(GPIO_PIN_SUBMIT_REPORT);
 	}
 }
 
