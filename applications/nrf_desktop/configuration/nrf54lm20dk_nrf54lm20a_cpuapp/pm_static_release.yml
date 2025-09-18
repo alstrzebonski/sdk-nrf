@@ -1,3 +1,5 @@
+# IMPORTANT NOTE
+# The Partition Manager is no longer enabled so this is not used.
 app:
   address: 0x7800
   region: flash_primary
