@@ -4,7 +4,26 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
  */
 
+ / {
+	chosen {
+		/* We need to point where we want to place MCUboot code. */
+		zephyr,code-partition = &boot_partition;
+	};
+};
+
 /* Application does not use cpuflpr core. Assign whole RRAM to cpuapp. */
 &cpuapp_rram {
 	reg = < 0x0 DT_SIZE_K(2036) >;
+};
+
+/* Put MCUboot RAM at the end of SRAM so that while MCUboot copies the image its RAM not overlaps
+ * with the app RAM where the code is copied to. The app code will be always put at the beginning of
+ * SRAM. There is no problem with app RAM (non-code) overlapping with MCUboot RAM.
+ * TODO: Add assert somewhere that app code don't overlap with MCUboot RAM.
+ */
+&cpuapp_sram {
+	compatible = "mmio-sram";
+	/delete-property/ reg;
+	reg = < 0x2007bc00 0x4000 >;
+	ranges = < 0x0 0x2007bc00 0x4000 >;
 };
