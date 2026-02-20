@@ -4,7 +4,10 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
  */
 
+#include "memory_map.dtsi"
 #include "app_common.dtsi"
+
+secondary_app_partition: &slot1_partition {};
 
 / {
 	/* Configure DTS nodes used for USB next HID support. */

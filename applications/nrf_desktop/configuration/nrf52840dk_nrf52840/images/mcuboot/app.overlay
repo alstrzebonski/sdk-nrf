@@ -4,9 +4,11 @@
  * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
  */
 
+#include "../../memory_map.dtsi"
+
 / {
 	chosen {
 		zephyr,code-partition = &boot_partition;
-		nordic,pm-ext-flash = &mx25r64;
+		// nordic,pm-ext-flash = &mx25r64;
 	};
 };
