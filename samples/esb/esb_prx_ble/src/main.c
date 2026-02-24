@@ -20,12 +20,12 @@
 #if IS_ENABLED(CONFIG_CLOCK_CONTROL_NRF2)
 #include <hal/nrf_lrcconf.h>
 #endif /* IS_ENABLED(CONFIG_CLOCK_CONTROL_NRF2) */
-#if NRF_ERRATA_STATIC_CHECK(54L, 20)
+#if NRF_ERRATA_STATIC_CHECK(54L, 20) || defined(NRF54LS05B_XXAA)
 #include <hal/nrf_power.h>
-#endif /* NRF_ERRATA_STATIC_CHECK(54L, 20) */
-#if NRF_ERRATA_STATIC_CHECK(54L, 39)
+#endif /* NRF_ERRATA_STATIC_CHECK(54L, 20) || defined(NRF54LS05B_XXAA) */
+#if NRF_ERRATA_STATIC_CHECK(54L, 39) || defined(NRF54LS05B_XXAA)
 #include <hal/nrf_clock.h>
-#endif /* NRF_ERRATA_STATIC_CHECK(54L, 39) */
+#endif /* NRF_ERRATA_STATIC_CHECK(54L, 39) || defined(NRF54LS05B_XXAA) */
 
 LOG_MODULE_REGISTER(esb_prx_ble, CONFIG_ESB_PRX_BLE_LOG_LEVEL);
 
@@ -162,6 +162,8 @@ int clocks_start(void)
 	if (NRF_ERRATA_DYNAMIC_CHECK(54L, 20)) {
 		nrf_power_task_trigger(NRF_POWER, NRF_POWER_TASK_CONSTLAT);
 	}
+#elif defined(NRF54LS05B_XXAA)
+	nrf_power_task_trigger(NRF_POWER, NRF_POWER_TASK_CONSTLAT);
 #endif /* NRF_ERRATA_STATIC_CHECK(54L, 20) */
 
 #if (NRF_ERRATA_STATIC_CHECK(54L, 39))
@@ -169,6 +171,8 @@ int clocks_start(void)
 	if (NRF_ERRATA_DYNAMIC_CHECK(54L, 39)) {
 		nrf_clock_task_trigger(NRF_CLOCK, NRF_CLOCK_TASK_PLLSTART);
 	}
+#elif defined(NRF54LS05B_XXAA)
+	nrf_clock_task_trigger(NRF_CLOCK, NRF_CLOCK_TASK_PLLSTART);
 #endif /* (NRF_ERRATA_STATIC_CHECK(54L, 39)) */
 
 	LOG_DBG("HF clock started");
