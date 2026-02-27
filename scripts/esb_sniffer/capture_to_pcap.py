@@ -4,10 +4,12 @@
 # SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
 #
 
+import argparse
 import struct
 import sys
 from threading import Thread
 
+from pynrfjprog.Parameters import DeviceFamily
 from Sniffer import Sniffer
 
 
@@ -35,17 +37,21 @@ class Capture:
         self.dev.stop()
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print(f"Ussage: {sys.argv[0]} output_filename.pcap", file=sys.stderr)
-        sys.exit(0)
+    parser = argparse.ArgumentParser(description="Capture ESB packets to pcap file")
+    parser.add_argument("output", help="Output pcap filename")
+    parser.add_argument("--device-family", choices=[f.name for f in DeviceFamily],
+                        default="AUTO",
+                        help="Device family to use (default: AUTO). "
+                             "Use NRF54L for nRF54LS05 DK if auto-detection fails.")
+    args = parser.parse_args()
 
     try:
-        f = open(sys.argv[1], 'wb')
+        f = open(args.output, 'wb')
     except Exception as err:
-        print(f"Failed to open {sys.argv[1]}: {err}", file=sys.stderr)
+        print(f"Failed to open {args.output}: {err}", file=sys.stderr)
         sys.exit(1)
 
-    dev = Sniffer()
+    dev = Sniffer(device_family=DeviceFamily[args.device_family])
     if dev.connect() != 0:
         sys.exit(1)
 

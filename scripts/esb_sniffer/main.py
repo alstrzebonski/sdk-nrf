@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
 #
 
+import argparse
 import contextlib
 import logging
 import os
@@ -11,6 +12,7 @@ import sys
 from threading import Event, Thread
 from time import sleep
 
+from pynrfjprog.Parameters import DeviceFamily
 from serial import Serial, SerialException
 from Sniffer import Sniffer
 
@@ -174,8 +176,15 @@ class Shell(Process):
             self.exit_exception = type(e).__name__
 
 def main():
+    parser = argparse.ArgumentParser(description="ESB sniffer with Wireshark extcap integration")
+    parser.add_argument("--device-family", choices=[f.name for f in DeviceFamily],
+                        default="AUTO",
+                        help="Device family to use (default: AUTO). "
+                             "Use NRF54L for nRF54LS05 DK if auto-detection fails.")
+    args = parser.parse_args()
+
     data_event = Event()
-    dev = Sniffer()
+    dev = Sniffer(device_family=DeviceFamily[args.device_family])
     use_shell = False
 
     if not os.path.exists(PIPE_DATA):

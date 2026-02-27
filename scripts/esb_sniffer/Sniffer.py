@@ -11,7 +11,7 @@ from time import sleep
 
 from pynrfjprog.APIError import APIError
 from pynrfjprog.LowLevel import API
-from pynrfjprog.Parameters import CoProcessor
+from pynrfjprog.Parameters import CoProcessor, DeviceFamily
 
 
 class RttCommands(Enum):
@@ -21,7 +21,7 @@ class RttCommands(Enum):
 
 class Sniffer:
     '''API to communicate with the DK.'''
-    def __init__(self, packet_len: int=45, rtt_channels: dict=None, read_at_once: int=2000, swd_freq_khz: int=8000, log_lvl=logging.INFO):
+    def __init__(self, packet_len: int=45, rtt_channels: dict=None, read_at_once: int=2000, swd_freq_khz: int=8000, log_lvl=logging.INFO, device_family: DeviceFamily=DeviceFamily.AUTO):
         if rtt_channels is None:
             rtt_channels = {"data_down": 1, "comm_down": 2, "comm_up": 1}
         self.jlink = None
@@ -30,6 +30,7 @@ class Sniffer:
         self.rtt_ch = rtt_channels
         self.read_at_once = read_at_once
         self.swd_freq_khz = swd_freq_khz
+        self.device_family = device_family
         self.logger = logging.getLogger("ESBSniffer")
         self.logger.setLevel(log_lvl)
         logging.basicConfig()
@@ -69,7 +70,7 @@ class Sniffer:
             return 0
 
         try:
-            self.jlink = API()
+            self.jlink = API(device_family=self.device_family)
             self.jlink.open()
             self.jlink.connect_to_emu_without_snr(jlink_speed_khz=self.swd_freq_khz)
 
